@@ -38,12 +38,7 @@
             <div class="relative">
                 <input type="password" id="passwordField" name="password" placeholder="Passsword" required class="w-full px-4 py-2.5 pr-11 border border-gray-300 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1AD1FA] transition-all">
                 
-                <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-3 flex items-center justify-center focus:outline-none">
-                    <svg id="eyeIcon" class="w-5 h-5 text-[#5A0B1A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3" fill="#5A0B1A"></circle>
-                    </svg>
-                </button>
+                
             </div>
             
             <div class="pt-2 flex justify-center">

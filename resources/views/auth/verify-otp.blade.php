@@ -13,6 +13,7 @@
     
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
         /* Menghilangkan arrow up/down bawaan browser di input type number */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
@@ -22,9 +23,103 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
+
+        /* --- STYLING LAYAR BIRU (OTP SALAH) --- */
+        .error-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #1AD1FA; /* Mengikuti warna background utama */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .error-card {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+        .error-text {
+            color: #ff3333;
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .btn-retry {
+            background-color: #1AD1FA;
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .btn-retry:hover {
+            opacity: 0.9;
+        }
+
+        /* --- STYLING CENTANG POPPING OUT (OTP BENAR) --- */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .checkmark-circle {
+            width: 120px;
+            height: 120px;
+            background-color: #e6f0ff;
+            border: 2px solid #a3c9ff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: popout 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+        }
+        .checkmark-icon {
+            font-size: 3.5rem;
+            color: #3b82f6;
+        }
+
+        @keyframes popout {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
+
 <body class="antialiased bg-[#1AD1FA] min-h-screen flex items-center justify-center p-4 md:p-8">
+
+    <div id="error-overlay" class="error-overlay">
+        <div class="error-card">
+            <p class="error-text">Kode yang dimasukkan salah.<br>Tolong coba lagi</p>
+            <button type="button" class="btn-retry" onclick="closeOverlay()">Coba Lagi</button>
+        </div>
+    </div>
+
+    <div id="success-overlay" class="success-overlay">
+        <div class="checkmark-circle">
+            <span class="checkmark-icon">&#10003;</span>
+        </div>
+    </div>
 
     <div class="bg-white rounded-[24px] shadow-2xl shadow-cyan-900/40 w-full max-w-[400px] p-6 md:p-8 relative flex flex-col transition-all">
         
@@ -44,157 +139,118 @@
                 {{ $errors->first('otp') }}
             </div>
         @endif
-        <form method="POST" action="{{ route('otp.verify') }}" class="w-full flex flex-col items-center">
+
+        <form id="formOtp" action="{{ route('otp.submit') }}" method="POST">
             @csrf
-            
-            <div class="flex justify-between w-full gap-2 mb-8">
-                <input type="number" name="otp[]" maxlength="1" oninput="moveNext(this, 'otp2')" id="otp1" class="w-12 h-12 md:w-14 md:h-14 text-center text-lg font-semibold border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1AD1FA] focus:border-[#1AD1FA] shadow-sm transition-all" required>
-                <input type="number" name="otp[]" maxlength="1" oninput="moveNext(this, 'otp3')" id="otp2" class="w-12 h-12 md:w-14 md:h-14 text-center text-lg font-semibold border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1AD1FA] focus:border-[#1AD1FA] shadow-sm transition-all" required>
-                <input type="number" name="otp[]" maxlength="1" oninput="moveNext(this, 'otp4')" id="otp3" class="w-12 h-12 md:w-14 md:h-14 text-center text-lg font-semibold border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1AD1FA] focus:border-[#1AD1FA] shadow-sm transition-all" required>
-                <input type="number" name="otp[]" maxlength="1" oninput="moveNext(this, 'otp5')" id="otp4" class="w-12 h-12 md:w-14 md:h-14 text-center text-lg font-semibold border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1AD1FA] focus:border-[#1AD1FA] shadow-sm transition-all" required>
-                <input type="number" name="otp[]" maxlength="1" id="otp5" class="w-12 h-12 md:w-14 md:h-14 text-center text-lg font-semibold border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1AD1FA] focus:border-[#1AD1FA] shadow-sm transition-all" required>
+            <div class="otp-container flex gap-2.5 justify-center mb-6">
+                <input type="text" class="otp-input w-12 h-12 md:w-14 md:h-14 text-center font-bold text-xl border-2 border-[#3bc5e7] rounded-xl focus:outline-none transition-colors" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input w-12 h-12 md:w-14 md:h-14 text-center font-bold text-xl border-2 border-gray-200 rounded-xl focus:outline-none transition-colors" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input w-12 h-12 md:w-14 md:h-14 text-center font-bold text-xl border-2 border-gray-200 rounded-xl focus:outline-none transition-colors" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input w-12 h-12 md:w-14 md:h-14 text-center font-bold text-xl border-2 border-gray-200 rounded-xl focus:outline-none transition-colors" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
+                <input type="text" class="otp-input w-12 h-12 md:w-14 md:h-14 text-center font-bold text-xl border-2 border-gray-200 rounded-xl focus:outline-none transition-colors" maxlength="1" pattern="[0-9]" inputmode="numeric" required>
             </div>
-            
-            <button type="submit" class="w-full bg-[#00B4D8] hover:bg-[#0096B4] text-white py-3 rounded-xl font-medium text-sm text-center shadow-lg transition-all active:scale-[0.98] mb-6">
+
+            <input type="hidden" name="otp_code" id="hiddenOtp">
+
+            <button type="submit" class="w-full bg-[#1AD1FA] text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-cyan-400/20 hover:bg-[#15b3d6] transition-colors text-center text-sm md:text-base mt-2">
                 Verifikasi
             </button>
-            
-            <p class="text-xs text-gray-500">
-                Belum dapat Email? <a href="#" class="text-blue-500 hover:underline font-medium">Kirim Ulang</a>
-            </p>
         </form>
+
+        <div class="text-center mt-6">
+            <p class="text-xs text-gray-500">Belum dapat Email? <a href="#" class="text-blue-500 font-medium hover:underline">Kirim Ulang</a></p>
+        </div>
     </div>
-
-    <div id="error-overlay" class="error-overlay" style="display: none;">
-    <div class="error-message">OTP Salah! Silakan coba lagi.</div>
-</div>
-
-<div id="success-overlay" class="success-overlay" style="display: none;">
-    <div class="checkmark-circle">
-        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-            <circle class="checkmark-circle-svg" cx="26" cy="26" r="25" fill="none"/>
-            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-        </svg>
-    </div>
-</div>
-
-<style>
-/* --- STYLING LAYAR BIRU (OTP SALAH) --- */
-.error-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: #007bff; /* Biru cerah */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-.error-message {
-    color: #ff3333; /* Teks merah */
-    font-size: 2rem;
-    font-weight: bold;
-    font-family: sans-serif;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-}
-
-/* --- STYLING CENTANG POPPING OUT (OTP BENAR) --- */
-.success-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(255, 255, 255, 0.8); /* Latar transparan agar fokus ke animasi */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-.checkmark-circle {
-    width: 100px;
-    height: 100px;
-    background-color: #007bff; /* Lingkaran biru cerah */
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    /* Animasi popout selama 1.5 detik sesuai dokumen */
-    animation: popout 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
-}
-.checkmark {
-    width: 60px;
-    height: 60px;
-    stroke: #ffffff; /* Warna centang putih di dalam lingkaran biru */
-    stroke-width: 5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-/* Keyframes untuk efek membesar dari tengah layar */
-@keyframes popout {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.2); /* Sedikit membesar melewati batas */
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1); /* Kembali ke ukuran normal */
-        opacity: 1;
-    }
-}
-</style>
 
     <script>
-        function moveNext(current, nextId) {
-            if (current.value.length >= 1) {
-                document.getElementById(nextId).focus();
+        // Jalankan script setelah seluruh DOM selesai dimuat
+        document.addEventListener("DOMContentLoaded", function() {
+            const inputs = document.querySelectorAll('.otp-input');
+            const hiddenOtp = document.getElementById('hiddenOtp');
+
+            inputs.forEach((input, index) => {
+                // Event saat mengetik angka
+                input.addEventListener('input', (e) => {
+                    if (!/^[0-9]$/.test(input.value)) {
+                        input.value = '';
+                        return;
+                    }
+
+                    // Reset semua border ke default dahulu, lalu beri warna biru untuk input aktif selanjutnya
+                    if (input.value !== '' && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                        inputs.forEach(i => i.style.borderColor = '#e2e8f0');
+                        inputs[index + 1].style.borderColor = '#3bc5e7';
+                    }
+                    
+                    updateHiddenInput();
+                });
+
+                // Event saat menghapus mundur dengan Backspace
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace') {
+                        if (input.value === '' && index > 0) {
+                            inputs[index - 1].focus();
+                            inputs.forEach(i => i.style.borderColor = '#e2e8f0');
+                            inputs[index - 1].style.borderColor = '#3bc5e7';
+                        } else {
+                            input.value = '';
+                        }
+                        updateHiddenInput();
+                    }
+                });
+            });
+
+            function updateHiddenInput() {
+                let code = '';
+                inputs.forEach(input => {
+                    code += input.value;
+                });
+                hiddenOtp.value = code;
             }
-        }
 
-        document.getElementById('otp-form').addEventListener('submit', function(e) {
-    e.preventDefault(); // Mencegah reload halaman bawaan form
+            // AJAX handling submit form
+            document.getElementById('formOtp').addEventListener('submit', function(event) {
+                event.preventDefault();
 
-    let formData = new FormData(this);
-    let actionUrl = this.getAttribute('action');
+                const formData = new FormData(this);
+                const errorOverlay = document.getElementById('error-overlay');
+                const successOverlay = document.getElementById('success-overlay');
 
-    fetch(actionUrl, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+                fetch(this.action || window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        successOverlay.style.display = 'flex';
+                        setTimeout(() => {
+                            window.location.href = data.redirect;
+                        }, 1500);
+                    } else {
+                        errorOverlay.style.display = 'flex';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+
+        function closeOverlay() {
+            document.getElementById('error-overlay').style.display = 'none';
+            // Reset isi kotak otp ketika gagal agar user bisa mengetik ulang dengan bersih
+            const inputs = document.querySelectorAll('.otp-input');
+            inputs.forEach((input, index) => {
+                input.value = '';
+                input.style.borderColor = index === 0 ? '#3bc5e7' : '#e2e8f0';
+            });
+            if(inputs[0]) inputs[0].focus();
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // 1. Munculkan overlay sukses
-            document.getElementById('success-overlay').style.display = 'flex';
-            
-            // 2. Redirect otomatis ke dashboard setelah animasi selesai (1.5 detik)
-            setTimeout(() => {
-                window.location.href = data.redirect_url;
-            }, 1500);
-        } else {
-            // 1. Munculkan overlay layar biru
-            let errorOverlay = document.getElementById('error-overlay');
-            errorOverlay.style.display = 'flex';
-            
-            // 2. Sembunyikan kembali setelah 2 detik agar user bisa mengulang input
-            setTimeout(() => {
-                errorOverlay.style.display = 'none';
-            }, 2000);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-});
     </script>
 </body>
 </html>
